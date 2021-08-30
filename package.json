@@ -22,9 +22,8 @@
       "twitter": "https://twitter.com/deadhorse_busi"
     }
   ],
-  "files": [
-    "index.js"
-  ],
+  "main": "index.js",
+  "types": "index.d.ts",
   "keywords": [
     "koa",
     "middleware",
@@ -51,6 +50,7 @@
     "mz": "^2.7.0"
   },
   "devDependencies": {
+    "@types/koa": "2.13.4",
     "bluebird": "3",
     "istanbul": "~0.4.1",
     "koa": "2",
