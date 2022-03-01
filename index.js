@@ -39,6 +39,21 @@ module.exports = function staticCache(dir, options, files) {
   return async (ctx, next) => {
     // only accept HEAD and GET
     if (ctx.method !== 'HEAD' && ctx.method !== 'GET') return await next()
+    // refresh cache
+    const { refresh } = options;
+    if(refresh &&  ctx.path === refresh.apiPath && ctx.query.token === refresh.token){
+      const {url} = ctx.query;
+      if(files.get(url)){
+        files.remove(url);
+        ctx.status = 200;
+        ctx.body = 'ok';
+      }else{
+        ctx.status = 404;
+        ctx.body = 'Error: 404';
+      }
+      return;
+    }
+
     // check prefix first to avoid calculate
     if (ctx.path.indexOf(options.prefix) !== 0) return await next()
 
@@ -47,7 +62,13 @@ module.exports = function staticCache(dir, options, files) {
     var filename = path.normalize(safeDecodeURIComponent(ctx.path))
 
     // check alias
-    if (options.alias && options.alias[filename]) filename = options.alias[filename];
+    if(options.alias){
+      if(typeof options.alias === 'function'){
+        filename = options.alias(filename,ctx) || filename;
+      }else{
+        if (options.alias[filename]) filename = options.alias[filename];
+      }
+    }
 
     var file = files.get(filename)
     // try to load file
@@ -75,8 +96,8 @@ module.exports = function staticCache(dir, options, files) {
         return await next()
       }
       if (!s.isFile()) return await next()
-
       file = loadFile(filename, dir, options, files)
+
     }
 
     ctx.status = 200
@@ -155,7 +176,7 @@ module.exports = function staticCache(dir, options, files) {
       return
     }
 
-    var stream = fs.createReadStream(file.path)
+    var stream = typeof options.after === 'function' ? options.after(fs.createReadStream(file.path),file.path,ctx) : fs.createReadStream(file.path);
 
     // update file hash
     if (!file.md5) {
@@ -208,7 +229,7 @@ function loadFile(name, dir, options, files) {
   var obj = files.get(pathname)
   var filename = obj.path = path.join(dir, name)
   var stats = fs.statSync(filename)
-  var buffer = fs.readFileSync(filename)
+  var buffer = typeof options.after === 'function' ? options.after(fs.readFileSync(filename),filename) :fs.readFileSync(filename);
 
   obj.cacheControl = options.cacheControl
   obj.maxAge = (typeof obj.maxAge === 'number' ? obj.maxAge : options.maxAge) || 0
@@ -240,4 +261,12 @@ FileManager.prototype.get = function (key) {
 FileManager.prototype.set = function (key, value) {
   if (this.store) return this.store.set(key, value)
   this.map[key] = value
+}
+
+FileManager.prototype.remove = function (key) {
+  if (this.store){
+    this.store.set(key,undefined);
+  }else{
+    delete this.map[key]
+  }
 }
