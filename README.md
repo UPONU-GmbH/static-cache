@@ -27,7 +27,7 @@ Differences between this library and other libraries such as [static](https://gi
 ## Installation
 
 ```js
-$ npm install koa-static-cache
+npm install koa-static-cache
 ```
 
 ## API
@@ -52,13 +52,16 @@ app.use(staticCache(path.join(__dirname, 'public'), {
 - `options.usePrecompiledGzip` (bool) - try use gzip files, loaded from disk, like nginx gzip_static
 - `options.brotli` (bool) - when request's accept-encoding include br, files will compressed by brotli.
 - `options.usePrecompiledBrotli` (bool) - try use brotli files, loaded from disk
-- `options.alias` (obj) - object map of aliases. See below.
+- `options.alias` (obj|function) - object map of aliases or function. See below.
 - `options.prefix` (str) - the url prefix you wish to add, default to `''`.
 - `options.dynamic` (bool) - dynamic load file which not cached on initialization.
 - `options.filter` (function | array) - filter files at init dir, for example - skip non build (source) files. If array set - allow only listed files
 - `options.preload` (bool) - caches the assets on initialization or not, default to `true`. always work together with `options.dynamic`.
 - `options.files` (obj) - optional files object. See below.
 - `files` (obj) - optional files object. See below.
+- `refresh` (obj) - optional token object. See below.
+- `after` (function) - optional after callback. See below.
+
 ### Aliases
 
 For example, if you have this alias object:
@@ -69,6 +72,18 @@ For example, if you have this alias object:
 }
 ```
 
+For example, if you have this alias function:
+
+```js
+function(filename){
+  if(filename==='/'){
+    return '/index.html';
+  }else{
+    return filename;
+  }
+}
+```
+
 Then requests to `/favicon.png` will actually return `/favicon-32.png` without redirects or anything.
 This is particularly important when serving [favicons](https://github.com/audreyr/favicon-cheat-sheet) as you don't want to store duplicate images.
 
@@ -76,6 +91,37 @@ This is particularly important when serving [favicons](https://github.com/audrey
 
 You can pass in an optional files object.
 This allows you to do two things:
+
+### refresh
+
+Then requests to `/refresh?token=abc&url=/a.js` will refresh cache
+
+```js
+app.use(staticCache({
+  dir: '/public',
+  dynamic: true,
+  refresh:{
+    token:'abc',
+    apiPath:'/refresh',
+  },
+}))
+
+```
+
+### after
+
+Then requests to `/b.js` will modify result by after callback
+
+```js
+app.use(staticCache({
+  dir: '/public',
+  dynamic: true,
+  after:(buf,ctx)=>{
+    return Buffer.concat([buf,Buffer.from('end')])
+  },
+}))
+
+```
 
 #### Combining directories into a single middleware
 
