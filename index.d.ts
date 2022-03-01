@@ -24,7 +24,7 @@ declare namespace staticCache {
         usePrecompiledGzip?: boolean | undefined;
         brotli?: boolean | undefined;
         usePrecompiledBrotli?: boolean | undefined;
-        alias?: {} | undefined;
+        alias?: {} | ((filename: string)=> string) | undefined;
         prefix?: string | undefined;
         dynamic?: boolean | undefined;
         filter?: ((path: string) => boolean) | string[] | undefined;
