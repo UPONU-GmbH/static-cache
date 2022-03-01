@@ -571,7 +571,7 @@ describe('Static Cache', function () {
     }))
     var server = app.listen()
     request(server)
-    .get('/Makefile')
+    .get('/README.md')
     .expect(404, done)
   })
 
@@ -583,7 +583,7 @@ describe('Static Cache', function () {
     }))
     var server = app.listen()
     request(server)
-    .get('/Makefile')
+    .get('/README.md')
     .expect(404, done)
   })
 
@@ -598,10 +598,10 @@ describe('Static Cache', function () {
     }))
     files.should.eql({})
     request(app.listen())
-      .get('/Makefile')
+      .get('/README.md')
       .expect(200, function (err, res) {
         should.not.exist(err)
-        files.should.have.keys('/Makefile')
+        files.should.have.keys('/README.md')
         done()
       })
   })

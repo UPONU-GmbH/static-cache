@@ -1,6 +1,7 @@
 var crypto = require('crypto')
-var fs = require('mz/fs')
-var zlib = require('mz/zlib')
+var fsP = require('fs/promises')
+var fs = require('fs')
+var zlib = require('zlib')
 var path = require('path')
 var mime = require('mime-types')
 var compressible = require('compressible')
@@ -91,7 +92,7 @@ module.exports = function staticCache(dir, options, files) {
 
       var s
       try {
-        s = await fs.stat(fullpath)
+        s = await fsP.stat(fullpath)
       } catch (err) {
         return await next()
       }
@@ -105,7 +106,7 @@ module.exports = function staticCache(dir, options, files) {
     if (enableBrotli || enableGzip) ctx.vary('Accept-Encoding')
 
     if (!file.buffer) {
-      var stats = await fs.stat(file.path)
+      var stats = await fsP.stat(file.path)
       if (stats.mtime.getTime() !== file.mtime.getTime()) {
         file.mtime = stats.mtime
         file.md5 = null
@@ -166,7 +167,7 @@ module.exports = function staticCache(dir, options, files) {
         if (options.usePrecompiledGzip && gzFile && gzFile.buffer) { // if .gz file already read from disk
           file.zipBuffer = gzFile.buffer
         } else {
-          file.zipBuffer = await zlib.gzip(file.buffer)
+          file.zipBuffer = await util.promisify(zlib.gzip)(file.buffer)
         }
         ctx.set('content-encoding', 'gzip')
         ctx.body = file.zipBuffer
