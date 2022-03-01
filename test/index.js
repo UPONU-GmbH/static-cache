@@ -64,6 +64,7 @@ app5.use(staticCache({
 var server5 = http.createServer(app5.callback())
 
 var app6 = new Koa()
+
 app6.use(staticCache(path.join(__dirname, '..'), {
   buffer: true,
   brotli: true,
@@ -238,6 +239,21 @@ describe('Static Cache', function () {
     request(server)
     .get('/package.json')
     .expect('Cache-Control', 'public, max-age=1')
+    .expect(200, done)
+  })
+
+  it('should set the maxAge 0', function (done) {
+    app6.use(staticCache(path.join(__dirname, '..'), {
+      maxAge: 365 * 24 * 60 * 60
+    }, {
+      '/package.json': {
+        maxAge: 0
+      }
+    }))
+
+    request(server6)
+    .get('/package.json')
+    .expect('Cache-Control', 'public, max-age=0')
     .expect(200, done)
   })
 
